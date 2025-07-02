@@ -1,30 +1,22 @@
 trigger:
-  branches:
-    include:
-      - main
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: ubuntu-latest
 
-stages:
-- stage: DeployToVM
-  jobs:
-  - job: CopyAndDeploy
-    steps:
-    - checkout: self
+steps:
+- task: CopyFilesOverSSH@0
+  inputs:
+    sshEndpoint: 'vm-password-ssh-connection'  # Your DevOps SSH service connection name
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: '**'
+    targetFolder: '/home/vamsi/app'
 
-    - task: CopyFilesOverSSH@0
-      inputs:
-        sshEndpoint: 'vm-password-ssh-connection'  # 🔧 Must exist in DevOps
-        sourceFolder: '$(Build.SourcesDirectory)'
-        contents: '**'
-        targetFolder: '/home/vamsi/app'
-
-    - task: SSH@0
-      inputs:
-        sshEndpoint: 'vm-password-ssh-connection'
-        runOptions: 'inline'
-        inline: |
-          cd /home/vamsi/app
-          chmod +x deploy.sh
-          ./deploy.sh
+- task: SSH@0
+  inputs:
+    sshEndpoint: 'vm-password-ssh-connection'
+    runOptions: 'commands'
+    commands: |
+      cd /home/vamsi/app
+      ls -l
+      echo "✅ App copied and running!"
