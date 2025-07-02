@@ -2,8 +2,8 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest  # Uses the Hosted Agent shown in your screenshot
+  name: Default  # Or your custom agent pool name if you changed it
 
 steps:
-- script: echo "✅ Azure Pipeline is working with Hosted Agent!"
-  displayName: "Print test message"
+- script: echo "✅ Pipeline executed successfully using self-hosted agent"
+  displayName: 'Test Agent Job'
