@@ -2,38 +2,23 @@ trigger:
 - main
 
 pool:
-  name: Default  # 👈 Change if your agent pool has a different name
+  name: Default  # 👈 Your self-hosted agent pool
 
 steps:
 - checkout: self
 
 - script: |
-    echo "🔪 Killing any existing Flask app running on port 8080..."
-    PID=$(lsof -ti:8080)
-    if [ -n "$PID" ]; then
-      echo "Found process on port 8080 with PID: $PID"
-      kill -9 $PID
-      echo "✅ Killed existing Flask app process."
-    else
-      echo "ℹ️ No existing process found on port 8080."
-    fi
-
-    echo "📁 Creating /home/vamsi/app directory..."
+    echo "📄 Copying latest app.py to /home/vamsi/app..."
     mkdir -p /home/vamsi/app
-
-    echo "📄 Copying app.py from GitHub to /home/vamsi/app..."
     cp $(Build.SourcesDirectory)/app.py /home/vamsi/app/
 
-    echo "🐍 Installing Python & Flask..."
-    sudo apt-get update -y
-    sudo apt-get install -y python3-pip
-    pip3 install --user flask
+    echo "🔄 Reloading systemd daemon and restarting Flask service..."
+    sudo systemctl daemon-reload
+    sudo systemctl restart flaskapp
 
-    echo "🚀 Running Flask app on 0.0.0.0:8080..."
-    nohup python3 /home/vamsi/app/app.py > /home/vamsi/app/output.log 2>&1 &
-
+    echo "⌛ Waiting 5 seconds for Flask to start..."
     sleep 5
 
-    echo "🔍 Checking app response on localhost:8080..."
+    echo "🌐 Checking public IP response on port 8080..."
     curl http://20.235.171.134:8080 || echo "❌ App is not responding"
-  displayName: 'Kill Old Flask App, Deploy & Run New Flask App'
+  displayName: 'Deploy Flask App via systemd'
