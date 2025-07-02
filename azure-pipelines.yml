@@ -2,25 +2,29 @@ trigger:
 - main
 
 pool:
-  name: Default  # Update if using a different agent pool
+  name: Default  # This is your self-hosted agent VM
 
 steps:
 - checkout: self
 
 - script: |
-    echo "📁 Creating app directory..."
+    echo "📁 Creating /home/vamsi/app directory..."
     mkdir -p /home/vamsi/app
+
+    echo "📄 Copying app.py..."
     cp app.py /home/vamsi/app/
 
-    echo "🚀 Installing Flask..."
-    sudo apt update -y
-    sudo apt install -y python3-pip curl
+    echo "🐍 Installing Flask..."
+    sudo apt-get update -y
+    sudo apt-get install -y python3-pip
     pip3 install --user flask
 
-    echo "▶️ Running Flask app..."
+    echo "🚀 Running Flask app on 0.0.0.0:8080..."
     nohup python3 /home/vamsi/app/app.py > /home/vamsi/app/output.log 2>&1 &
 
+    echo "⌛ Waiting 5 seconds before checking app..."
     sleep 5
-    echo "🔍 Verifying app is running on http://localhost:8080"
-    curl --fail http://localhost:8080 && echo "✅ App is up!" || echo "❌ App failed to start"
-  displayName: 'Deploy, Run & Verify Flask App on VM'
+
+    echo "🔍 Checking if app responds..."
+    curl http://localhost:8080
+  displayName: 'Deploy, Run & Verify Flask App'
