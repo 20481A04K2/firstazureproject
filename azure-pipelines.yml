@@ -2,26 +2,23 @@ trigger:
 - main
 
 pool:
-  name: Default  # Replace with your custom agent pool name if different
+  name: Default  # Replace if your agent pool name is custom
 
 steps:
 - checkout: self
-
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.x'
-    addToPath: true
 
 - script: |
     echo "📁 Creating app directory on VM..."
     mkdir -p /home/vamsi/app
     cp app.py /home/vamsi/app/
 
-    echo "🚀 Installing Flask if needed..."
-    python3 -m pip install --user flask
+    echo "🚀 Installing Flask..."
+    sudo apt update -y
+    sudo apt install -y python3-pip
+    pip3 install --user flask
 
     echo "▶️ Running Flask app..."
     nohup python3 /home/vamsi/app/app.py > /home/vamsi/app/output.log 2>&1 &
 
-    echo "✅ Deployment done!"
+    echo "✅ Deployment done! App is running."
   displayName: 'Deploy and Run Flask App on VM'
