@@ -2,8 +2,8 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: ubuntu-latest  # Uses the Hosted Agent shown in your screenshot
 
 steps:
-- script: echo "✅ Azure DevOps pipeline ran successfully!"
-  displayName: 'Print Test Message'
+- script: echo "✅ Azure Pipeline is working with Hosted Agent!"
+  displayName: "Print test message"
