@@ -5,20 +5,5 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- checkout: self
-
-- task: CopyFilesOverSSH@0
-  inputs:
-    sshEndpoint: 'vm-password-ssh-connection'  # 👈 must match your DevOps SSH connection
-    sourceFolder: '$(Build.SourcesDirectory)'
-    contents: '**'
-    targetFolder: '/home/vamsi/app'
-
-- task: SSH@0
-  inputs:
-    sshEndpoint: 'vm-password-ssh-connection'
-    runOptions: 'commands'
-    commands: |
-      cd /home/vamsi/app
-      ls -l
-      echo "✅ Files copied and ready to run"
+- script: echo "✅ Azure DevOps pipeline ran successfully!"
+  displayName: 'Print Test Message'
