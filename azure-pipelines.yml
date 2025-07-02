@@ -5,9 +5,11 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- checkout: self
+
 - task: CopyFilesOverSSH@0
   inputs:
-    sshEndpoint: 'vm-password-ssh-connection'  # Your DevOps SSH service connection name
+    sshEndpoint: 'vm-password-ssh-connection'  # 👈 must match your DevOps SSH connection
     sourceFolder: '$(Build.SourcesDirectory)'
     contents: '**'
     targetFolder: '/home/vamsi/app'
@@ -19,4 +21,4 @@ steps:
     commands: |
       cd /home/vamsi/app
       ls -l
-      echo "✅ App copied and running!"
+      echo "✅ Files copied and ready to run"
