@@ -35,5 +35,5 @@ steps:
     sleep 5
 
     echo "🔍 Checking app response on localhost:8080..."
-    curl http://localhost:8080 || echo "❌ App is not responding"
+    curl http://20.235.171.134:8080 || echo "❌ App is not responding"
   displayName: 'Kill Old Flask App, Deploy & Run New Flask App'
