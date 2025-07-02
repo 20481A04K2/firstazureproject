@@ -2,23 +2,83 @@ trigger:
 - main
 
 pool:
-  name: Default  # 👈 Your self-hosted agent pool
+  name: Default  # your self-hosted agent pool
+
+variables:
+  IMAGE_NAME: flaskapp
+  ACR_NAME: vamsiacr  # 🔧 Change if you want a different ACR name
+  RESOURCE_GROUP: KIRTHI
+  LOCATION: southindia
+  CONTAINER_APP: flask-container
+  ENVIRONMENT_NAME: flask-env
 
 steps:
 - checkout: self
 
 - script: |
-    echo "📄 Copying latest app.py to /home/vamsi/app..."
-    mkdir -p /home/vamsi/app
-    cp $(Build.SourcesDirectory)/app.py /home/vamsi/app/
+    echo "🔐 Logging into Azure..."
+    az account set --subscription "Azure subscription 1"
 
-    echo "🔄 Reloading systemd daemon and restarting Flask service..."
-    sudo systemctl daemon-reload
-    sudo systemctl restart flaskapp
+    echo "🔎 Checking if ACR exists..."
+    ACR_EXISTS=$(az acr check-name --name $(ACR_NAME) --query nameAvailable -o tsv)
+    if [ "$ACR_EXISTS" = "true" ]; then
+      echo "📦 Creating Azure Container Registry..."
+      az acr create \
+        --name $(ACR_NAME) \
+        --resource-group $(RESOURCE_GROUP) \
+        --sku Basic \
+        --location $(LOCATION) \
+        --admin-enabled true
+    else
+      echo "✅ ACR already exists: $(ACR_NAME)"
+    fi
 
-    echo "⌛ Waiting 5 seconds for Flask to start..."
-    sleep 5
+    echo "🔑 Logging into ACR..."
+    az acr login --name $(ACR_NAME)
 
-    echo "🌐 Checking public IP response on port 8080..."
-    curl http://20.235.171.134:8080 || echo "❌ App is not responding"
-  displayName: 'Deploy Flask App via systemd'
+    echo "🐳 Building Docker image..."
+    docker build -t $(IMAGE_NAME):latest .
+
+    echo "🔁 Tagging image for ACR..."
+    docker tag $(IMAGE_NAME):latest $(ACR_NAME).azurecr.io/$(IMAGE_NAME):latest
+
+    echo "📤 Pushing image to ACR..."
+    docker push $(ACR_NAME).azurecr.io/$(IMAGE_NAME):latest
+  displayName: 'Build & Push Docker Image to ACR'
+
+- script: |
+    echo "📦 Checking Container App environment..."
+    az containerapp env show \
+      --name $(ENVIRONMENT_NAME) \
+      --resource-group $(RESOURCE_GROUP) >/dev/null 2>&1
+
+    if [ $? -ne 0 ]; then
+      echo "🌱 Creating Container App Environment..."
+      az containerapp env create \
+        --name $(ENVIRONMENT_NAME) \
+        --resource-group $(RESOURCE_GROUP) \
+        --location $(LOCATION)
+    else
+      echo "✅ Container App Environment exists"
+    fi
+
+    echo "🔍 Checking if container app exists..."
+    az containerapp show --name $(CONTAINER_APP) --resource-group $(RESOURCE_GROUP) >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      echo "♻️ Updating container app..."
+      az containerapp update \
+        --name $(CONTAINER_APP) \
+        --resource-group $(RESOURCE_GROUP) \
+        --image $(ACR_NAME).azurecr.io/$(IMAGE_NAME):latest
+    else
+      echo "🚀 Creating container app..."
+      az containerapp create \
+        --name $(CONTAINER_APP) \
+        --resource-group $(RESOURCE_GROUP) \
+        --environment $(ENVIRONMENT_NAME) \
+        --image $(ACR_NAME).azurecr.io/$(IMAGE_NAME):latest \
+        --target-port 8080 \
+        --ingress external \
+        --registry-server $(ACR_NAME).azurecr.io
+    fi
+  displayName: 'Deploy to Azure Container Apps'
