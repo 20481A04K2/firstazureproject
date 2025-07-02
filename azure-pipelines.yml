@@ -6,27 +6,25 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.x'
+stages:
+- stage: DeployToVM
+  jobs:
+  - job: CopyAndDeploy
+    steps:
+    - checkout: self
 
-- script: echo "Starting deployment"
-  displayName: 'Start Deployment'
+    - task: CopyFilesOverSSH@0
+      inputs:
+        sshEndpoint: 'vm-password-ssh-connection'  # 🔧 Must exist in DevOps
+        sourceFolder: '$(Build.SourcesDirectory)'
+        contents: '**'
+        targetFolder: '/home/vamsi/app'
 
-- task: CopyFilesOverSSH@0
-  inputs:
-    sshEndpoint: 'your-ssh-service-connection-name'
-    sourceFolder: '$(Build.SourcesDirectory)'
-    contents: '**'
-    targetFolder: '/home/your-user/your-app-folder'
-
-- task: SSH@0
-  inputs:
-    sshEndpoint: 'your-ssh-service-connection-name'
-    runOptions: 'inline'
-    inline: |
-      cd /home/your-user/your-app-folder
-      chmod +x deploy.sh
-      ./deploy.sh
-  displayName: 'Run Deployment Script'
+    - task: SSH@0
+      inputs:
+        sshEndpoint: 'vm-password-ssh-connection'
+        runOptions: 'inline'
+        inline: |
+          cd /home/vamsi/app
+          chmod +x deploy.sh
+          ./deploy.sh
