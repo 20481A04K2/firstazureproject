@@ -6,7 +6,7 @@ pool:
 
 variables:
   IMAGE_NAME: flaskapp
-  ACR_NAME: vamsiacr  # 🔧 Change if you want a different ACR name
+  ACR_NAME: vamsiacr1234  # ✅ Updated ACR name
   RESOURCE_GROUP: KIRTHI
   LOCATION: southindia
   CONTAINER_APP: flask-container
